@@ -21,7 +21,8 @@ def import_all_midis() -> List[Song]:
     return songs
 
 
-def get_metadata(midi: MidiFile) -> Tuple[int, int]:
+def get_metadata(midi: MidiFile) -> Tuple[int, str]:
+    is_key_signature = False
     is_time_signature = False
     multiple_time_signatures = False
 
@@ -33,6 +34,7 @@ def get_metadata(midi: MidiFile) -> Tuple[int, int]:
         for msg in track:
             if msg.type == 'key_signature':
                 key_signature = msg.key
+                is_key_signature = True
             if msg.type == 'time_signature':
                 new_tpm = msg.numerator * ticks_per_beat * 4 / msg.denominator
 
@@ -43,6 +45,8 @@ def get_metadata(midi: MidiFile) -> Tuple[int, int]:
 
                 ticks_per_measure = new_tpm
 
+    if not is_key_signature:
+        raise Exception('No key signature.')
     if not is_time_signature:
         log_warning('No time signature.')
     if multiple_time_signatures:
@@ -65,7 +69,8 @@ def midi_to_song(midi: MidiFile) -> Song:
                     cumulative_time = 0
                     first_note = True
                 if msg.velocity != 0:
-                    song.add_note(cumulative_time, tpm, msg.note)
+                    if not song.add_note(cumulative_time, tpm, msg.note):
+                        return song
     return song
 
 
