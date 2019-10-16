@@ -1,8 +1,12 @@
 import math
-from typing import List
+from pprint import pprint
+from typing import List, Iterable
+
+from mido import Message
+import numpy as np
 
 import util
-from logger import log_info
+from logger import log_info, log_warning
 
 MEASURES_IN_SONG = 16
 ATOMS_IN_MEASURE = 48
@@ -71,7 +75,32 @@ class Song:
             return True
 
     def add_note(self, tick: int, ticks_per_measure: int, note: int) -> bool:
+        # log_info('adding note {:3d} tick {:7d}/{:f}'.format(note, tick, ticks_per_measure))
         return self._add_note(int(round(ATOMS_IN_MEASURE * tick / ticks_per_measure)), note)
 
     def is_correct_song(self) -> bool:
         return any(any(note == 1 for note in bar) for bar in self.data[ATOMS_IN_SONG - ATOMS_IN_MEASURE:ATOMS_IN_SONG])
+
+
+class SongFun:
+    data: List[List[int]]
+
+    def __init__(self, msgs: Iterable[Message]):
+        msgs = np.array(msgs)
+        msgs_key_signature = list(filter(lambda msg: msg.type == 'key_signature', msgs))
+        msgs_time_signature = list(filter(lambda msg: msg.type == 'time_signature', msgs))
+        msgs_note_on = list(filter(lambda msg: msg.type == 'note_on' and msg.velocity != 0, msgs))
+
+        if len(msgs_key_signature) == 0:
+            raise Exception('No key signature')
+        if len(msgs_time_signature) == 0:
+            log_warning('No time signature')
+        if len(msgs_time_signature) > 1:
+            log_warning('Multiple time signatures')
+
+        self.key = msgs_key_signature[0]
+
+        relative_time = list(map(lambda msg: msg.time, msgs))
+        print(relative_time)
+        cumulative_time = np.cumsum(relative_time)
+        print(cumulative_time)

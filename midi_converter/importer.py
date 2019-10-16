@@ -2,11 +2,11 @@ import os
 from typing import Tuple, List
 from mido import MidiFile, MidiTrack, Message
 
-from song import Song
+from song import Song, SongFun
 from logger import log_ok, log_info, log_error, log_warning
 
 
-def import_all_midis() -> List[Song]:
+def import_all_midis() -> List[SongFun]:
     songs = []
     for root, _, files in os.walk('midi'):
         for file in files:
@@ -14,7 +14,7 @@ def import_all_midis() -> List[Song]:
                 try:
                     log_info('Trying to open \"{}\".'.format(file))
                     midi = MidiFile(root + '\\' + file)
-                    songs.append(midi_to_song(midi))
+                    songs.append(SongFun(msg for _, track in enumerate(midi.tracks) for msg in track))
                     log_ok('Converted correctly.')
                 except Exception as e:
                     log_error('Exception during converting \"{}\": {}.'.format(file, str(e)))
