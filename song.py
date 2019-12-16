@@ -1,12 +1,8 @@
-import math
-from typing import List, NewType
+from typing import List, Union
 
 import torch
 
 import util
-from logger import log_info
-
-# Song = NewType('Song', torch.Tensor)
 
 MEASURES_IN_SONG = 16  # def 16
 ATOMS_IN_MEASURE = 48  # def 48
@@ -54,12 +50,13 @@ def key_str_to_transpose(key: str):
 
 
 class Song:
-    data: List[List[List[int]]]
+    data: Union[List[List[List[int]]], torch.Tensor]
 
     def __init__(self, key: str):
         self.key = key
         self.transposition = -1 * key_str_to_transpose(key)
-        self.data = [[[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_MEASURE)] for _ in range(MEASURES_IN_SONG)]
+        self.data = [[[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_MEASURE)] for _ in
+                     range(MEASURES_IN_SONG)]
 
     def visualize(self) -> str:
         NOTE = '█'
@@ -67,7 +64,7 @@ class Song:
         return util.transpose_and_flip_upside_down_str(MEASURES_IN_SONG, ATOMS_IN_MEASURE,
                                                        '\n'.join(
                                                            '\n'.join(
-                                                               ''.join(NOTE if item == 1 else BREAK for item in row)
+                                                               ''.join(NOTE if item else BREAK for item in row)
                                                                for row in measure)
                                                            for measure in self.data))
 
@@ -79,11 +76,11 @@ class Song:
             return True
 
     def add_note(self, tick: int, ticks_per_measure: int, note: int) -> bool:
-        return self._add_note(int(round(ATOMS_IN_MEASURE * tick / ticks_per_measure)),
-                              note)  # Not // for it doesn't work
+        return self._add_note(int(round(ATOMS_IN_MEASURE * tick / ticks_per_measure)), note)  # round > floor
 
     def is_correct_song(self) -> bool:
-        return any(any(note == 1 for note in bar) for bar in self.data[ATOMS_IN_SONG - ATOMS_IN_MEASURE:ATOMS_IN_SONG])
+        # return any(any(note for note in bar) for bar in self.data[ATOMS_IN_SONG - ATOMS_IN_MEASURE:ATOMS_IN_SONG])
+        raise DeprecationWarning
 
-    # def finalize(self) -> Song:
-    # return Song(torch.Tensor(self.data))
+    def finalize(self) -> None:
+        self.data = torch.tensor(self.data)
