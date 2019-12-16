@@ -1,9 +1,10 @@
 import os
 from typing import Tuple, List
-from mido import MidiFile, MidiTrack, Message
 
+from mido import MidiFile
+
+from logger import *
 from song import Song
-from logger import log_ok, log_info, log_error, log_warning
 
 
 def import_all_midis() -> List[Song]:
@@ -13,11 +14,12 @@ def import_all_midis() -> List[Song]:
             if file.endswith('.mid') or file.endswith('.midi'):
                 try:
                     log_info('Trying to open \"{}\".'.format(file))
-                    midi = MidiFile(root + '\\' + file)
+                    midi = MidiFile(os.path.join(root, file))
                     songs.append(midi_to_song(midi))
                     log_ok('Converted correctly.')
                 except Exception as e:
-                    log_error('Exception during converting \"{}\": {}.'.format(file, str(e)))
+                    log_error('Exception during converting \"{}\": {}.\n'.format(file, str(e)))
+                    traceback.print_exc()
     return songs
 
 

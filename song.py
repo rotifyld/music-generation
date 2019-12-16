@@ -1,11 +1,15 @@
 import math
-from typing import List
+from typing import List, NewType
+
+import torch
 
 import util
 from logger import log_info
 
-MEASURES_IN_SONG = 16
-ATOMS_IN_MEASURE = 48
+# Song = NewType('Song', torch.Tensor)
+
+MEASURES_IN_SONG = 16  # def 16
+ATOMS_IN_MEASURE = 48  # def 48
 ATOMS_IN_SONG = MEASURES_IN_SONG * ATOMS_IN_MEASURE
 
 MIN_NOTE = 21
@@ -50,28 +54,36 @@ def key_str_to_transpose(key: str):
 
 
 class Song:
-    data: List[List[int]]
+    data: List[List[List[int]]]
 
     def __init__(self, key: str):
         self.key = key
         self.transposition = -1 * key_str_to_transpose(key)
-        self.data = [[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_SONG)]
+        self.data = [[[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_MEASURE)] for _ in range(MEASURES_IN_SONG)]
 
     def visualize(self) -> str:
         NOTE = '█'
         BREAK = '·'
-        return util.transpose_and_flip_upside_down_str(
-            '\n'.join(''.join(NOTE if item == 1 else BREAK for item in row) for row in self.data))
+        return util.transpose_and_flip_upside_down_str(MEASURES_IN_SONG, ATOMS_IN_MEASURE,
+                                                       '\n'.join(
+                                                           '\n'.join(
+                                                               ''.join(NOTE if item == 1 else BREAK for item in row)
+                                                               for row in measure)
+                                                           for measure in self.data))
 
     def _add_note(self, atom: int, note: int) -> bool:
         if atom >= ATOMS_IN_SONG:
             return False
         else:
-            self.data[atom][note + self.transposition - MIN_NOTE] = 1
+            self.data[atom // ATOMS_IN_MEASURE][atom % ATOMS_IN_MEASURE][note + self.transposition - MIN_NOTE] = 1
             return True
 
     def add_note(self, tick: int, ticks_per_measure: int, note: int) -> bool:
-        return self._add_note(int(round(ATOMS_IN_MEASURE * tick / ticks_per_measure)), note)
+        return self._add_note(int(round(ATOMS_IN_MEASURE * tick / ticks_per_measure)),
+                              note)  # Not // for it doesn't work
 
     def is_correct_song(self) -> bool:
         return any(any(note == 1 for note in bar) for bar in self.data[ATOMS_IN_SONG - ATOMS_IN_MEASURE:ATOMS_IN_SONG])
+
+    # def finalize(self) -> Song:
+    # return Song(torch.Tensor(self.data))
