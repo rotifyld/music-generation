@@ -43,7 +43,7 @@ _key_str_to_int = {
 }
 
 
-def key_str_to_transpose(key: str):
+def _key_str_to_transpose(key: str):
     if key[-1] == 'm':
         key = key[:-1]
     return - _key_str_to_int.get(key, 0)
@@ -52,9 +52,9 @@ def key_str_to_transpose(key: str):
 class Song:
     data: Union[List[List[List[int]]], torch.Tensor]
 
-    def __init__(self, key: str):
+    def __init__(self, key='C'):
         self.key = key
-        self.transposition = -1 * key_str_to_transpose(key)
+        self.transposition = -1 * _key_str_to_transpose(key)
         self.data = [[[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_MEASURE)] for _ in
                      range(MEASURES_IN_SONG)]
 
@@ -82,5 +82,20 @@ class Song:
         # return any(any(note for note in bar) for bar in self.data[ATOMS_IN_SONG - ATOMS_IN_MEASURE:ATOMS_IN_SONG])
         raise DeprecationWarning
 
-    def finalize(self) -> None:
-        self.data = torch.tensor(self.data)
+    def to_tensor(self) -> torch.Tensor:
+        return torch.tensor(self.data).flatten()
+
+
+ZEROS = torch.zeros([16, 48, 88])
+ONES = torch.ones([16, 48, 88])
+if (torch.cuda.is_available()):
+    ZEROS = ZEROS.cuda()
+    ONES = ONES.cuda()
+
+
+def from_tensor(t: torch.Tensor, threshold=0.5) -> Song:
+    s = Song()
+    t = t.reshape([16, 48, 88])
+    t = torch.where(t > threshold, ONES, ZEROS)
+    s.data = t
+    return s
