@@ -1,17 +1,29 @@
+import os
+from typing import List
+
 import torch
 
-from logger import log_info
-from midi_converter.importer import import_all_midis
-
-# songs = import_all_midis('midi')
-songs = import_all_midis('../data_scraping/ninsheetmusic')
-songs = list(map(lambda s: s.toTensor(), songs))
-songs = torch.stack(songs)
-
-torch.save(songs, 'ninsheetmusic.pt')
+from midi_converter.importer import import_all_midis, get_data
+from song import Song
 
 
-# i = 0
-# for song in songs:
-#     song_to_midi(song, '{}.mid'.format(i))
-#     i += 1
+def convert_midi_to_tensor(name: str):
+    if name is not None:
+        songs = import_all_midis('{}/../data_scraping/{}'.format(os.path.dirname(os.path.abspath(__file__)), name))
+        songs = [s.to_tensor() for s in songs]
+        songs = torch.stack(songs)
+        torch.save(songs, '{}.pt'.format(name))
+
+
+def edit_tensor(name):
+    songs = get_data(name)
+    songs = [torch.flatten(s) for s in songs]
+    songs = torch.stack(songs)
+    songs = songs.float()
+    torch.save(songs, 'ninsheetmusic2.pt')
+
+
+if __name__ == '__main__':
+    pass
+    # convert_midi_to_tensor('ninsheetmusic')
+    # edit_tensor('ninsheetmusic')

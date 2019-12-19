@@ -1,6 +1,6 @@
 import os
 import traceback
-from typing import Tuple, List
+from typing import List
 
 import torch
 from mido import MidiFile
@@ -10,8 +10,8 @@ from song import Song
 from midi_converter.converter import midi_to_song
 
 
-def get_data(name='ninsheetmusic.pt') -> torch.Tensor:
-    songs = torch.load('/home/rotifyld/Code/Python/jnp/music_generation/midi_converter/ninsheetmusic.pt')
+def get_data(name='ninsheetmusic') -> torch.Tensor:
+    songs = torch.load('{}/{}.pt'.format(os.path.dirname(os.path.abspath(__file__)), name))
     return songs
 
 

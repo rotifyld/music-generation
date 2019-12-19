@@ -4,49 +4,58 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from midi_converter.converter import song_to_midi
 from midi_converter.importer import get_data
-from midi_converter.generator import random_midis
 from logger import log_info, log_ok
-from model import Autoencoder, build_model, load_model
-from song import from_tensor
+from models.autoencoder import Autoencoder, build_model
 
-NUM_EPOCHS = 50
-VERBOSE = True
-CUDA = True
+NUM_EPOCHS = 10
+
+DATASET = 'ninsheetmusic'
+DATA_LENGTH = -1  # -1 for all available in given dataset
+
+MODEL = 'autoencoder'
+CUDA = False
+
+# optimizer
+LEARNING_RATE = 1e-2
+WEIGHT_DECAY = 1e-5
 
 
 def train():
-    dataset = get_data()[:50]
-    print(dataset.size())
+    log_info('Loading data...')
+    dataset = get_data('ninsheetmusic')[:DATA_LENGTH]
     dataset_length = dataset.size()[0]
-    log_info('Dataset of size {}'.format(dataset_length))
+    log_info('Data loaded! Dataset of size {}'.format(dataset_length))
 
     log_info('Building model...')
     model: Autoencoder = build_model(CUDA)
     if CUDA:
         model = model.cuda()
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 
-    log_info('Started training.')
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+
+    log_info('Model built! Starting training..')
     start_time = datetime.now()
+
+    # train loop
     for epoch in range(NUM_EPOCHS):
         for i, data in enumerate(dataset):
-            data = torch.flatten(data)  # TODO data needs to be reloaded and then this line deleted
-            data = data.float()
             data = Variable(data)
             if CUDA:
                 data = data.cuda()
-            # ===================forward=====================
+
+            # forward
             output = model(data)
             loss = criterion(output, data)
-            # ===================backward====================
+
+            # backward
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            if VERBOSE and not CUDA:
+            # logging
+            if not CUDA:
                 if i in [10, 25, 50] or i % 100 == 0:
                     log_ok('Processed {}/{} songs.'.format(i + 1, dataset_length))
             else:
@@ -54,25 +63,18 @@ def train():
                     log_ok('Processed {}/{} songs.'.format(i + 1, dataset_length))
 
         # ===================log========================
-        log_info('Epoch [{}/{}], loss:{:.4f}. Time elapsed: {}'
+        log_info('Epoch [{}/{}], loss:{:.8f}. Time elapsed: {}'
                  .format(epoch + 1, NUM_EPOCHS, loss.data, datetime.now() - start_time))
 
     log_info('Finished training in {}'.format(datetime.now() - start_time))
-    torch.save(model.state_dict(), 'modelE{}D{}T{}.pt'.format(NUM_EPOCHS, dataset_length, datetime.now()))
-
-    random_midis(model.decode, NUM_EPOCHS, dataset_length, cuda=CUDA)
-
-
-def debug():
-    dataset = get_data()[:10]
-    for i, data in enumerate(dataset):
-        data = torch.flatten(data)
-        song = from_tensor(data, 0.5)
-        song_to_midi(song, 'training{}'.format(i))
+    torch.save(model.state_dict(),
+               'export/models/{}/{}_d{}_e{}.pt'.format(MODEL, datetime.now(), dataset_length, NUM_EPOCHS))
+    log_ok('Model saved.')
 
 
 if __name__ == '__main__':
-    log_info('{} CUDA device(s) available.'.format(torch.cuda.device_count()) if torch.cuda.is_available() else 'No CUDA available.')
+    log_info('{} CUDA device(s) available.'.format(
+        torch.cuda.device_count()) if torch.cuda.is_available() else 'No CUDA available.')
 
     if CUDA:
         torch.cuda.empty_cache()

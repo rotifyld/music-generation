@@ -21,7 +21,6 @@ class Autoencoder(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Linear(H * num_chunks, F),  # H * num_H = 3200
-            nn.Tanh()
         )
 
         self.decoder = nn.Sequential(
@@ -31,7 +30,7 @@ class Autoencoder(nn.Module):
 
         self.decoderChunk = nn.Sequential(
             nn.Linear(H, D),
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
     def forward(self, x):  # x is of size D * num_H
@@ -46,7 +45,6 @@ class Autoencoder(nn.Module):
         x_chunks = torch.chunk(x, self.num_chunks)
         x_chunks = [self.decoderChunk(chunk) for chunk in x_chunks]
         x = torch.cat(x_chunks)
-
         return x
 
     def decode(self, feature_vector):  # feat_vector is tensor of length F
@@ -55,7 +53,14 @@ class Autoencoder(nn.Module):
         x_chunks = torch.chunk(x, self.num_chunks)
         x_chunks = [self.decoderChunk(chunk) for chunk in x_chunks]
         x = torch.cat(x_chunks)
+        return x
 
+    def encode(self, x):
+        x_chunks = torch.chunk(x, self.num_chunks)
+        x_chunks = [self.encoderChunk(chunk) for chunk in x_chunks]
+        x = torch.cat(x_chunks)
+
+        x = self.encoder(x)
         return x
 
 
@@ -65,5 +70,8 @@ def build_model(cuda: bool) -> Autoencoder:
     return model
 
 
-def load_model() -> Autoencoder:
-    raise NotImplementedError
+def load_model(path: str) -> Autoencoder:
+    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 200, MEASURES_IN_SONG, 120, False)
+    model.load_state_dict(torch.load(path))
+    model.eval()
+    return model

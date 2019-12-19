@@ -88,12 +88,9 @@ class Song:
 
 ZEROS = torch.zeros([16, 48, 88])
 ONES = torch.ones([16, 48, 88])
-if (torch.cuda.is_available()):
-    ZEROS = ZEROS.cuda()
-    ONES = ONES.cuda()
 
 
-def from_tensor(t: torch.Tensor, threshold=0.5) -> Song:
+def from_tensor(t: torch.Tensor, threshold) -> Song:
     s = Song()
     t = t.reshape([16, 48, 88])
     t = torch.where(t > threshold, ONES, ZEROS)
