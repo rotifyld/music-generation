@@ -8,12 +8,11 @@ from midi_converter.importer import get_data
 from logger import log_info, log_ok
 from models.autoencoder import Autoencoder, build_model
 
-NUM_EPOCHS = 10
-
+NUM_EPOCHS = 50
 DATASET = 'ninsheetmusic'
 DATA_LENGTH = -1  # -1 for all available in given dataset
 
-MODEL = 'autoencoder'
+MODEL = 'autoencoder_hidden'
 CUDA = False
 
 # optimizer
@@ -32,7 +31,7 @@ def train():
     if CUDA:
         model = model.cuda()
 
-    criterion = nn.MSELoss()
+    criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
     log_info('Model built! Starting training..')

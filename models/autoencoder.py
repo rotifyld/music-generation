@@ -5,31 +5,34 @@ from song import ATOMS_IN_MEASURE, MEASURES_IN_SONG, NUM_NOTES
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, D, H, num_chunks, F, CUDA=False):
+    def __init__(self, chunk_in_features, chunk_out_features, num_chunks, out_features, cuda=False):
         super(Autoencoder, self).__init__()
 
-        self.D = D
-        self.H = H
         self.num_chunks = num_chunks
-        self.F = F
-        self.CUDA = CUDA
+        self.CUDA = cuda
 
         self.encoderChunk = nn.Sequential(
-            nn.Linear(D, H),  # D = 4224
-            nn.ReLU(True)
+            nn.Linear(chunk_in_features, 1024),  # 4224 -> 1024
+            nn.ReLU(True),
+            nn.Linear(1024, chunk_out_features)  # 1024 -> 128
         )
 
         self.encoder = nn.Sequential(
-            nn.Linear(H * num_chunks, F),  # H * num_H = 3200
+            nn.Linear(chunk_out_features * num_chunks, 512),  # 2048 -> 512
+            nn.ReLU(True),
+            nn.Linear(512, out_features)  # 512 -> 128
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(F, H * num_chunks),
-            nn.ReLU(True)
+            nn.Linear(out_features, 512),  # 512 <- 128
+            nn.ReLU(True),
+            nn.Linear(512, chunk_out_features * num_chunks),  # 2048 <- 512
         )
 
         self.decoderChunk = nn.Sequential(
-            nn.Linear(H, D),
+            nn.Linear(chunk_out_features, 1024),  # 1024 <- 128
+            nn.ReLU(True),
+            nn.Linear(1024, chunk_in_features),  # 4224 <- 1024
             nn.Sigmoid()
         )
 
@@ -65,13 +68,13 @@ class Autoencoder(nn.Module):
 
 
 def build_model(cuda: bool) -> Autoencoder:
-    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 200, MEASURES_IN_SONG, 120, cuda)
+    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, cuda)
 
     return model
 
 
 def load_model(path: str) -> Autoencoder:
-    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 200, MEASURES_IN_SONG, 120, False)
-    model.load_state_dict(torch.load(path))
+    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, False)
+    model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     model.eval()
     return model

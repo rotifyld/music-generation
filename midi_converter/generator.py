@@ -11,7 +11,7 @@ def random_midis(decoder: Callable[[torch.Tensor], torch.Tensor], epoch, data_le
     if thresholds is None:
         thresholds = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05]
 
-    fs = torch.normal(0.0, 1.0, [number, 120])
+    fs = torch.normal(0.0, 1.0, [number, 128])
     if cuda:
         fs = fs.cuda()
 
