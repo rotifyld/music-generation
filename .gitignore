@@ -123,8 +123,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Custom
-*.midi
-*.mid
-*.pt
