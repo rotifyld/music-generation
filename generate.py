@@ -9,14 +9,14 @@ from models.autoencoder import load_model
 from song import from_tensor
 from midi_converter.converter import song_to_midi
 
-MODEL = "export/models/autoencoder_hidden/2020-01-04 17:41:41.107034_d4016_e50.pt"
+MODEL = "export/models/autoencoder_batch/2020-01-08 16:09:55.178383_d10_e500.pt"
 
 
 def generate():
     """Loads trained model and generates new melody from random midis"""
 
     model = load_model(MODEL)
-    random_midis(model.decode, epoch=50, data_length=4016, thresholds=[0.3, 0.1, 0.06], number=3, cuda=False)
+    random_midis(model.decode, epoch=500, data_length=10, thresholds=[0.1, 0.06], number=10, cuda=False)
 
 
 def generate_mean_song():
@@ -29,7 +29,7 @@ def generate_mean_song():
     mean_decoded = model.decode(mean_feature)
     th = 0.99999997001
     mean_song = from_tensor(mean_decoded, th)
-    song_to_midi(mean_song, 'export/midi/autoencoder_hidden/d4016_e50_th{}'.format(th))
+    song_to_midi(mean_song, 'export/midi/autoencoder_batch/d4016_e50_th{}'.format(th))
 
 
 def encode():
@@ -51,7 +51,6 @@ def encode():
 
 
 if __name__ == '__main__':
-    pass
-    # generate()
+    generate()
     # generate_mean_song()
     # encode()
