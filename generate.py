@@ -13,6 +13,8 @@ MODEL = "export/models/autoencoder_hidden/2020-01-04 17:41:41.107034_d4016_e50.p
 
 
 def generate():
+    """Loads trained model and generates new melody from random midis"""
+
     model = load_model(MODEL)
     random_midis(model.decode, epoch=50, data_length=4016, thresholds=[0.3, 0.1, 0.06], number=3, cuda=False)
 

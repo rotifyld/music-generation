@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from song import ATOMS_IN_MEASURE, MEASURES_IN_SONG, NUM_NOTES
+from song import ATOMS_IN_MEASURE, MEASURES_IN_SONG, NUM_PITCHES
 
 
 class Autoencoder(nn.Module):
@@ -68,13 +68,13 @@ class Autoencoder(nn.Module):
 
 
 def build_model(cuda: bool) -> Autoencoder:
-    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, cuda)
+    model = Autoencoder(NUM_PITCHES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, cuda)
 
     return model
 
 
 def load_model(path: str) -> Autoencoder:
-    model = Autoencoder(NUM_NOTES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, False)
+    model = Autoencoder(NUM_PITCHES * ATOMS_IN_MEASURE, 128, MEASURES_IN_SONG, 128, False)
     model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     model.eval()
     return model

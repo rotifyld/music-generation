@@ -8,9 +8,9 @@ MEASURES_IN_SONG = 16  # def 16
 ATOMS_IN_MEASURE = 48  # def 48
 ATOMS_IN_SONG = MEASURES_IN_SONG * ATOMS_IN_MEASURE
 
-MIN_NOTE = 21
-MAX_NOTE = 108
-NUM_NOTES = MAX_NOTE - MIN_NOTE + 1
+MIN_PITCH = 21
+MAX_PITCH = 108
+NUM_PITCHES = MAX_PITCH - MIN_PITCH + 1
 
 _key_str_to_int = {
     'Gb': -6,
@@ -50,12 +50,13 @@ def _key_str_to_transpose(key: str):
 
 
 class Song:
-    data: Union[List[List[List[int]]], torch.Tensor]
+    Measure = List[List[int]]  # x – time, y – pitch
+    data: Union[List[Measure], torch.Tensor]
 
     def __init__(self, key='C'):
         self.key = key
         self.transposition = -1 * _key_str_to_transpose(key)
-        self.data = [[[0 for _ in range(NUM_NOTES)] for _ in range(ATOMS_IN_MEASURE)] for _ in
+        self.data = [[[0 for _ in range(NUM_PITCHES)] for _ in range(ATOMS_IN_MEASURE)] for _ in
                      range(MEASURES_IN_SONG)]
 
     def visualize(self) -> str:
@@ -72,7 +73,7 @@ class Song:
         if atom >= ATOMS_IN_SONG:
             return False
         else:
-            self.data[atom // ATOMS_IN_MEASURE][atom % ATOMS_IN_MEASURE][note + self.transposition - MIN_NOTE] = 1
+            self.data[atom // ATOMS_IN_MEASURE][atom % ATOMS_IN_MEASURE][note + self.transposition - MIN_PITCH] = 1
             return True
 
     def add_note(self, tick: int, ticks_per_measure: int, note: int) -> bool:

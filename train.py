@@ -10,7 +10,7 @@ from models.autoencoder import Autoencoder, build_model
 
 NUM_EPOCHS = 50
 DATASET = 'ninsheetmusic'
-DATA_LENGTH = -1  # -1 for all available in given dataset
+DATA_LENGTH = 1  # -1 for all available in given dataset
 
 MODEL = 'autoencoder_hidden'
 CUDA = False
@@ -34,7 +34,7 @@ def train():
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
-    log_info('Model built! Starting training..')
+    log_info('Model built! Starting training...')
     start_time = datetime.now()
 
     # train loop

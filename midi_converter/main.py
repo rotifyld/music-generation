@@ -9,10 +9,11 @@ from song import Song
 
 def convert_midi_to_tensor(name: str):
     if name is not None:
-        songs = import_all_midis('{}/../data_scraping/{}'.format(os.path.dirname(os.path.abspath(__file__)), name))
-        songs = [s.to_tensor() for s in songs]
-        songs = torch.stack(songs)
-        torch.save(songs, '{}.pt'.format(name))
+        path = '{}/../data_scraping/{}'.format(os.path.dirname(os.path.abspath(__file__)), name)
+        songs = import_all_midis(path)
+        songs_flattened = [s.to_tensor() for s in songs]
+        songs_flattened = torch.stack(songs_flattened)
+        torch.save(songs_flattened, '{}.pt'.format(name))
 
 
 def edit_tensor(name):
@@ -24,6 +25,5 @@ def edit_tensor(name):
 
 
 if __name__ == '__main__':
-    pass
-    # convert_midi_to_tensor('ninsheetmusic')
+    convert_midi_to_tensor('ninsheetmusic1')
     # edit_tensor('ninsheetmusic')

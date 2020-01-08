@@ -2,7 +2,7 @@ from typing import Tuple
 
 from mido import MidiFile, MidiTrack, Message
 
-from song import Song, ATOMS_IN_MEASURE, MIN_NOTE
+from song import Song, ATOMS_IN_MEASURE, MIN_PITCH
 from logger import *
 
 
@@ -41,7 +41,7 @@ def get_metadata(midi: MidiFile) -> Tuple[int, str]:
 
 
 def midi_to_song(midi: MidiFile) -> Song:
-    tpm, key = get_metadata(midi)
+    tpm, key = get_metadata(midi)  # ticks per minute, key
     cumulative_time = 0
     first_note = False
     song = Song(key)
@@ -54,6 +54,7 @@ def midi_to_song(midi: MidiFile) -> Song:
                     cumulative_time = 0
                     first_note = True
                 if msg.velocity != 0:
+                    # returns false if more than 16 measures added
                     if not song.add_note(cumulative_time, tpm, msg.note):
                         return song
     return song
@@ -79,7 +80,7 @@ def song_to_midi(song: Song, filename: str):
         atom, pitch = int(atom), int(pitch)
         abs_time = atom * ticks_per_atom
         delta_time = abs_time - last_time
-        note = pitch + MIN_NOTE
+        note = pitch + MIN_PITCH
         track.append(Message(message, note=note, velocity=100, time=delta_time))
         last_time = abs_time
 
