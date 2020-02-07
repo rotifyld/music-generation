@@ -46,7 +46,7 @@ _key_str_to_int = {
 def _key_str_to_transpose(key: str):
     if key[-1] == 'm':
         key = key[:-1]
-    return - _key_str_to_int.get(key, 0)
+    return _key_str_to_int.get(key, 0)
 
 
 class Song:

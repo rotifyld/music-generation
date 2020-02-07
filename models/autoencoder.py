@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-from models.time_distributed import TimeDistributed
 from song import ATOMS_IN_MEASURE, MEASURES_IN_SONG, NUM_PITCHES
 
 
@@ -12,28 +11,28 @@ class Autoencoder(nn.Module):
         self.num_chunks = num_chunks
         self.CUDA = cuda
 
-        self.encoderChunk = nn.Sequential(
+        self.measureEncoder = nn.Sequential(
             nn.Linear(chunk_in_features, 1024),  # 4224 -> 1024
             nn.ReLU(True),
             nn.Linear(1024, chunk_out_features),  # 1024 -> 128
             nn.ReLU(True)
         )
 
-        self.encoder = nn.Sequential(
+        self.songEncoder = nn.Sequential(
             nn.Linear(chunk_out_features * num_chunks, 512),  # 2048 -> 512
             nn.ReLU(True),
             nn.Linear(512, out_features),  # 512 -> 128
             nn.BatchNorm1d(128)
         )
 
-        self.decoder = nn.Sequential(
+        self.songDecoder = nn.Sequential(
             nn.Linear(out_features, 512),  # 512 <- 128
             nn.BatchNorm1d(512),
             nn.ReLU(True),
             nn.Linear(512, chunk_out_features * num_chunks),  # 2048 <- 512
         )
 
-        self.decoderChunk = nn.Sequential(
+        self.measureDecoder = nn.Sequential(
             nn.BatchNorm1d(128),
             nn.ReLU(True),
             nn.Linear(chunk_out_features, 1024),  # 1024 <- 128
@@ -49,16 +48,16 @@ class Autoencoder(nn.Module):
 
         x = torch.reshape(x, (shape[0] * self.num_chunks, -1))
 
-        x = self.encoderChunk(x)
+        x = self.measureEncoder(x)
 
         x = torch.reshape(x, (shape[0], -1))
 
-        x = self.encoder(x)
-        x = self.decoder(x)
+        x = self.songEncoder(x)
+        x = self.songDecoder(x)
 
         x = torch.reshape(x, (shape[0] * self.num_chunks, -1))
 
-        x = self.decoderChunk(x)
+        x = self.measureDecoder(x)
 
         x = torch.reshape(x, (shape[0], -1))
 
@@ -68,19 +67,11 @@ class Autoencoder(nn.Module):
 
         x = torch.reshape(feature_vector, [1, -1])
 
-        x = self.decoder(x)
+        x = self.songDecoder(x)
 
         x = torch.reshape(x, [self.num_chunks, -1])
 
-        x = self.decoderChunk(x)
-        return x
-
-    def encode(self, x):
-        x_chunks = torch.chunk(x, self.num_chunks)
-        x_chunks = [self.encoderChunk(chunk) for chunk in x_chunks]
-        x = torch.cat(x_chunks)
-
-        x = self.encoder(x)
+        x = self.measureDecoder(x)
         return x
 
 
