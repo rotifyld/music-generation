@@ -5,40 +5,40 @@ from song import ATOMS_IN_MEASURE, MEASURES_IN_SONG, NUM_PITCHES
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, chunk_in_features, chunk_out_features, num_chunks, out_features, cuda=False):
+    def __init__(self, measure_in_features, measure_out_features, num_measures, song_out_features, cuda=False):
         super(Autoencoder, self).__init__()
 
-        self.num_chunks = num_chunks
+        self.num_measures = num_measures
         self.CUDA = cuda
 
         self.measureEncoder = nn.Sequential(
-            nn.Linear(chunk_in_features, 1024),  # 4224 -> 1024
+            nn.Linear(measure_in_features, 1024),  # 4224 -> 1024
             nn.ReLU(True),
-            nn.Linear(1024, chunk_out_features),  # 1024 -> 128
+            nn.Linear(1024, measure_out_features),  # 1024 -> 128
             nn.ReLU(True)
         )
 
         self.songEncoder = nn.Sequential(
-            nn.Linear(chunk_out_features * num_chunks, 512),  # 2048 -> 512
+            nn.Linear(measure_out_features * num_measures, 512),  # 2048 -> 512
             nn.ReLU(True),
-            nn.Linear(512, out_features),  # 512 -> 128
+            nn.Linear(512, song_out_features),  # 512 -> 128
             nn.BatchNorm1d(128)
         )
 
         self.songDecoder = nn.Sequential(
-            nn.Linear(out_features, 512),  # 512 <- 128
+            nn.Linear(song_out_features, 512),  # 512 <- 128
             nn.BatchNorm1d(512),
             nn.ReLU(True),
-            nn.Linear(512, chunk_out_features * num_chunks),  # 2048 <- 512
+            nn.Linear(512, measure_out_features * num_measures),  # 2048 <- 512
         )
 
         self.measureDecoder = nn.Sequential(
             nn.BatchNorm1d(128),
             nn.ReLU(True),
-            nn.Linear(chunk_out_features, 1024),  # 1024 <- 128
+            nn.Linear(measure_out_features, 1024),  # 1024 <- 128
             nn.BatchNorm1d(1024),
             nn.ReLU(True),
-            nn.Linear(1024, chunk_in_features),  # 4224 <- 1024
+            nn.Linear(1024, measure_in_features),  # 4224 <- 1024
             nn.Sigmoid()
         )
 
@@ -46,7 +46,7 @@ class Autoencoder(nn.Module):
 
         shape = x.shape
 
-        x = torch.reshape(x, (shape[0] * self.num_chunks, -1))
+        x = torch.reshape(x, (shape[0] * self.num_measures, -1))
 
         x = self.measureEncoder(x)
 
@@ -55,7 +55,7 @@ class Autoencoder(nn.Module):
         x = self.songEncoder(x)
         x = self.songDecoder(x)
 
-        x = torch.reshape(x, (shape[0] * self.num_chunks, -1))
+        x = torch.reshape(x, (shape[0] * self.num_measures, -1))
 
         x = self.measureDecoder(x)
 
@@ -69,7 +69,7 @@ class Autoencoder(nn.Module):
 
         x = self.songDecoder(x)
 
-        x = torch.reshape(x, [self.num_chunks, -1])
+        x = torch.reshape(x, [self.num_measures, -1])
 
         x = self.measureDecoder(x)
         return x
