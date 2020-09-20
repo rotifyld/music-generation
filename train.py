@@ -8,8 +8,8 @@ from midi_converter.importer import get_data
 from logger import log_info, log_ok
 from models.autoencoder import Autoencoder, build_model
 
-NUM_EPOCHS = 10000
-SAVE_MODEL_EACH = 1000
+NUM_EPOCHS = 2000
+SAVE_MODEL_EACH = 500
 SHOW_EXACT_LOSS_EACH = 9999999
 DATASET = 'ninsheetmusic_trans'
 DATA_LENGTH = 4016  # 4016 = 251 * 2^4 is the max
@@ -100,6 +100,7 @@ def train():
                                                                     mean_loss))
     log_ok('Model saved.')
 
+    torch.save(loss_global_history, "loss.pt")
 
 if __name__ == '__main__':
     log_info('{} CUDA device(s) available.'.format(
